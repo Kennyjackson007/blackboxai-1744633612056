@@ -5,11 +5,24 @@ $db_user = 'root';
 $db_pass = '';
 $db_name = 'photo_gallery';
 
-$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+// Create connection without selecting database first
+$conn = new mysqli($db_host, $db_user, $db_pass);
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
+
+// Create database if it doesn't exist
+$conn->query("CREATE DATABASE IF NOT EXISTS $db_name");
+$conn->select_db($db_name);
+
+// Create users table if it doesn't exist
+$conn->query("CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)");
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Handle registration
@@ -44,10 +57,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($result->num_rows === 1) {
             $user = $result->fetch_assoc();
-            if (password_verify($password, $user['password'])) {
-                $_SESSION['user_id'] = $user['id'];
-                echo json_encode(['success' => true]);
-                exit;
+                if (password_verify($password, $user['password'])) {
+                    $_SESSION['user_id'] = $user['id'];
+                    echo json_encode([
+                        'success' => true,
+                        'set_local_storage' => true
+                    ]);
+                    exit;
             }
         }
         http_response_code(401);
