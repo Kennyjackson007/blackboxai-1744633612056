@@ -76,11 +76,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file-upload'])) {
             exit;
         }
         
+        $description = $_POST['image-caption'] ?? 'No caption'; // Get caption from the form
         $stmt = $conn->prepare("INSERT INTO images (user_id, filename, description) VALUES (?, ?, ?)");
         $user_id = $_SESSION['user_id'];
         $stmt->bind_param("iss", $user_id, $filename, $description);
-        $description = $_POST['image-caption'] ?? 'No caption'; // Get caption from the form
-        $stmt->bind_param("ss", $filename, $description);
         
         if ($stmt->execute()) {
             // Return success response with image info
